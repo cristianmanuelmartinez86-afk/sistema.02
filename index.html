@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SACE Honduras - Cuadro de Evaluación ITOL 2026</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS para Exportar/Importar Excel con Estilos -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .vertical-text {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            white-space: nowrap;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; padding: 0 !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-200 text-slate-800 min-h-screen flex flex-col p-2 md:p-4">
+
+    <!-- BARRA SUPERIOR DE CONTROL -->
+    <div class="bg-slate-900 text-white rounded-t-2xl p-3 flex flex-wrap items-center justify-between gap-3 no-print">
+        <div class="flex items-center space-x-3">
+            <span class="inline-block w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="font-extrabold text-xs tracking-wider text-amber-400">SISTEMA SACE HONDURAS 2026 - INSTITUTO TÉCNICO OBDULIO LEZAMA</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <button onclick="toggleJornada()" class="bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 shadow-sm">
+                <i class="fa-solid fa-clock"></i>
+                <span>Jornada: <span id="btnJornadaText">MATUTINA</span></span>
+            </button>
+            <button onclick="openSubjectTeacherModal()" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 shadow-sm">
+                <i class="fa-solid fa-chalkboard-user"></i>
+                <span>Nombre del Docente por Materia</span>
+            </button>
+            <button onclick="openTeacherModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5">
+                <i class="fa-solid fa-user-gear"></i>
+                <span id="currentTeacherBtn">Lic. Fernando Antonio Zelaya Arriaga</span>
+            </button>
+            <button onclick="openPasteModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1">
+                <i class="fa-solid fa-paste"></i>
+                <span>Pegar de Excel</span>
+            </button>
+            <button onclick="exportToExcel()" class="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1">
+                <i class="fa-solid fa-file-excel"></i>
+                <span>Descargar Excel con Color</span>
+            </button>
+            <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1">
+                <i class="fa-solid fa-print"></i>
+                <span>Imprimir Hoja</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- SELECCIÓN DE CURSO Y MATERIA -->
+    <div class="bg-white border-x border-b border-slate-300 p-3 flex flex-wrap items-center justify-between gap-3 no-print">
+        <div class="flex items-center space-x-1 overflow-x-auto py-1" id="courseSelectorContainer"></div>
+
+        <div class="flex items-center space-x-2">
+            <label class="text-xs font-bold text-slate-700 flex items-center space-x-1">
+                <i class="fa-solid fa-book-open text-emerald-600"></i>
+                <span>Asignatura:</span>
+            </label>
+            <select id="subjectDropdown" onchange="changeSubject(this.value)" class="bg-slate-50 border border-slate-300 rounded-xl font-bold text-xs px-3 py-1.5 outline-none focus:ring-2 focus:ring-emerald-500">
+            </select>
+        </div>
+    </div>
+
+    <!-- FORMATO OFICIAL DE HOJA DE EXCEL DEL SACE -->
+    <div class="bg-white p-6 shadow-md border border-slate-300 rounded-b-2xl max-w-full overflow-x-auto custom-scrollbar mt-1">
+        <div class="min-w-[1100px] bg-white p-2">
+            
+            <!-- ENCABEZADO OFICIAL -->
+            <div class="relative text-center border-b-2 border-slate-900 pb-3 mb-4">
+                <!-- LOGO OFICIAL EN LÍNEA -->
+                <img src="https://images.deepai.org/converted-files/3860010/output.jpg?access_key=b6f5cfcc-a031-4172-8820-fb16091219ee" alt="Logo ITOL" class="absolute left-4 top-0 w-20 h-20 object-contain" onerror="this.src='https://placehold.co/100x100/064e3b/ffffff?text=ITOL';">
+                
+                <div class="absolute right-4 top-0 w-16 h-16 flex items-center justify-center border-2 border-slate-400 rounded-full text-[9px] font-bold text-slate-600 text-center p-1">
+                    REPÚBLICA DE HONDURAS
+                </div>
+
+                <h3 class="font-extrabold text-sm text-slate-800 tracking-wider">REPÚBLICA DE HONDURAS</h3>
+                <h2 class="font-black text-base text-slate-900 uppercase">SECRETARÍA DE EDUCACIÓN</h2>
+                <h4 class="font-bold text-xs text-slate-700 uppercase">DIRECCIÓN DEPARTAMENTAL DE EDUCACIÓN DE COMAYAGUA</h4>
+                <h1 class="font-black text-lg text-slate-900 mt-2 bg-slate-100 inline-block px-6 py-0.5 border border-slate-300 rounded-md">CUADRO Nº 1</h1>
+            </div>
+
+            <!-- DATOS INSTITUCIONALES -->
+            <div id="excelHeaderInfo" class="grid grid-cols-12 gap-y-1 text-xs font-bold text-slate-800 border border-slate-400 p-3 bg-slate-50/50 rounded-lg mb-4">
+                <div class="col-span-3 text-slate-600">CENTRO EDUCATIVO:</div>
+                <div class="col-span-9 uppercase text-slate-900 font-extrabold">INSTITUTO TECNICO OBDULIO LEZAMA</div>
+
+                <div class="col-span-2 text-slate-600">LUGAR:</div>
+                <div class="col-span-4 uppercase">SAN ANTONIO DE LA CUESTA</div>
+                <div class="col-span-2 text-slate-600">MUNICIPIO:</div>
+                <div class="col-span-2 uppercase">SAN JERONIMO</div>
+                <div class="col-span-2 text-slate-600">CÓDIGO: <span class="text-slate-900 font-normal">031800015</span></div>
+
+                <div class="col-span-2 text-slate-600">PERIODO ACADEMICO:</div>
+                <div class="col-span-2">2026</div>
+                <div class="col-span-1 text-slate-600">GRADO:</div>
+                <div class="col-span-2 uppercase" id="lblGrado">SEPTIMO</div>
+                <div class="col-span-1 text-slate-600">SECCION:</div>
+                <div class="col-span-1 uppercase" id="lblSeccion">1</div>
+                <div class="col-span-1 text-slate-600">DEPARTAMENTO:</div>
+                <div class="col-span-2 uppercase">COMAYAGUA</div>
+
+                <div class="col-span-2 text-slate-600">MODALIDAD:</div>
+                <div class="col-span-6 uppercase" id="lblModalidad">TERCER CICLO DE EDUCACION BASICA</div>
+                <div class="col-span-2 text-slate-600">JORNADA:</div>
+                <div class="col-span-2 uppercase font-extrabold text-sky-800" id="lblJornada">MATUTINA</div>
+
+                <div class="col-span-2 text-slate-600">DOCENTE:</div>
+                <div class="col-span-5 uppercase text-emerald-800 font-black" id="lblDocente">LIC. FERNANDO ANTONIO ZELAYA ARRIAGA</div>
+                <div class="col-span-2 text-slate-600">ASIGNATURA:</div>
+                <div class="col-span-3 uppercase text-emerald-800 font-black" id="lblAsignatura">EDUCACIÓN FISICA Y DEPORTES</div>
+            </div>
+
+            <!-- MATRIZ DE CALIFICACIONES -->
+            <div id="tableSheetContainer"></div>
+
+            <!-- BOTONES INFERIORES -->
+            <div class="mt-3 flex justify-between items-center no-print">
+                <div class="flex items-center space-x-2">
+                    <button onclick="addNewStudent()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-sm flex items-center space-x-1.5">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>Agregar Nuevo Estudiante</span>
+                    </button>
+                    <button onclick="openPasteModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-sm flex items-center space-x-1.5">
+                        <i class="fa-solid fa-paste"></i>
+                        <span>Pegar Celdas de Excel</span>
+                    </button>
+                </div>
+                <div class="text-xs font-bold text-slate-500">
+                    SACE Honduras • Formato Cuadro N°1 Oficial
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL DOCENTE POR MATERIA -->
+    <div id="modalSubjectTeacher" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-extrabold text-base text-slate-900 flex items-center space-x-2">
+                    <i class="fa-solid fa-chalkboard-user text-amber-600"></i>
+                    <span>Docente para esta Materia</span>
+                </h3>
+                <button onclick="closeSubjectTeacherModal()" class="text-slate-400 hover:text-slate-700 font-bold"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="font-bold text-slate-600">Asignatura Seleccionada:</label>
+                    <input type="text" id="modalCurrentSubjectName" readonly class="w-full bg-slate-100 border border-slate-300 rounded-lg px-3 py-2 font-bold text-slate-800">
+                </div>
+                <div>
+                    <label class="font-bold text-slate-600">Nombre del Docente que imparte esta materia:</label>
+                    <input type="text" id="modalSubjectTeacherInput" placeholder="Ej. Lic. Carlos Pineda" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+            </div>
+
+            <div class="flex space-x-2 pt-2 border-t">
+                <button onclick="saveSubjectTeacher()" class="flex-1 bg-amber-600 hover:bg-amber-500 text-white py-2 rounded-xl text-xs font-bold transition-all">Asignar a esta Materia</button>
+                <button onclick="closeSubjectTeacherModal()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 py-2 rounded-xl text-xs font-bold transition-all">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA PEGAR DE EXCEL -->
+    <div id="modalPasteExcel" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-extrabold text-base text-slate-900 flex items-center space-x-2">
+                    <i class="fa-solid fa-file-import text-indigo-600"></i>
+                    <span>Pegar Datos desde Excel</span>
+                </h3>
+                <button onclick="closePasteModal()" class="text-slate-400 hover:text-slate-700 font-bold"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <p class="text-xs text-slate-600">
+                Copia las celdas en Excel (<strong class="text-slate-900">Nombre, DNI, Notas</strong>)[cite: 3, 4] y pégalas en este recuadro con <strong class="text-slate-900">Ctrl + V</strong>:
+            </p>
+
+            <textarea id="pasteTextarea" rows="6" placeholder="Pega aquí lo que copiaste en Excel..." class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+
+            <div class="flex space-x-2 pt-2 border-t">
+                <button onclick="processPastedExcelData()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-xl text-xs font-bold">Importar Celdas</button>
+                <button onclick="closePasteModal()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 py-2 rounded-xl text-xs font-bold">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE DOCENTES Y REGISTRO DE NUEVOS PROFESORES -->
+    <div id="modalTeacherLogin" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-extrabold text-base text-slate-900 flex items-center space-x-2">
+                    <i class="fa-solid fa-user-gear text-emerald-600"></i>
+                    <span>Gestión de Docentes SACE</span>
+                </h3>
+                <button onclick="closeTeacherModal()" class="text-slate-400 hover:text-slate-700 font-bold"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <p class="text-xs text-slate-600 font-medium">Seleccione el docente activo:</p>
+            <div class="space-y-2" id="teacherOptions"></div>
+
+            <div class="pt-4 border-t border-slate-200 space-y-3">
+                <h4 class="text-xs font-bold text-slate-800"><i class="fa-solid fa-user-plus text-emerald-600 mr-1"></i> Registrar Nuevo Docente / Correo</h4>
+                <input type="text" id="newProfName" placeholder="Nombre completo (Ej. Lic. Carlos Pineda)" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs">
+                <input type="text" id="newProfEmail" placeholder="Correo electrónico institucional" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs">
+                <button onclick="registerNewTeacher()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg text-xs font-bold transition-all">
+                    Guardar e Iniciar Sesión
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDITAR ESTUDIANTE Y NOTAS -->
+    <div id="modalEditStudent" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <h3 class="font-extrabold text-base text-slate-900 border-b pb-2"><i class="fa-solid fa-pen-to-square text-blue-600 mr-1"></i> Editar Estudiante y Notas</h3>
+            <input type="hidden" id="editStudentIndex">
+            
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="font-bold text-slate-600">Nombre Completo:</label>
+                    <input type="text" id="editStudentName" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 font-bold">
+                </div>
+                <div>
+                    <label class="font-bold text-slate-600">DNI / RNE:</label>
+                    <input type="text" id="editStudentDni" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 font-mono">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-2 border-t">
+                    <div>
+                        <label class="font-bold text-amber-700">I Parcial Acum. (70):</label>
+                        <input type="number" id="editP1Acc" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1">
+                    </div>
+                    <div>
+                        <label class="font-bold text-amber-700">I Parcial Ex. (30):</label>
+                        <input type="number" id="editP1Exam" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1">
+                    </div>
+
+                    <div>
+                        <label class="font-bold text-purple-700">II Parcial Acum. (70):</label>
+                        <input type="number" id="editP2Acc" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1">
+                    </div>
+                    <div>
+                        <label class="font-bold text-purple-700">II Parcial Ex. (30):</label>
+                        <input type="number" id="editP2Exam" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1">
+                    </div>
+
+                    <div>
+                        <label class="font-bold text-sky-700">III Parcial Acum. (70):</label>
+                        <input type="number" id="editP3Acc" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1">
+                    </div>
+                    <div>
+                        <label class="font-bold text-sky-700">III Parcial Ex. (30):</label>
+                        <input type="number" id="editP3Exam" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1">
+                    </div>
+
+                    <div>
+                        <label class="font-bold text-rose-700">IV Parcial Acum. (70):</label>
+                        <input type="number" id="editP4Acc" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1">
+                    </div>
+                    <div>
+                        <label class="font-bold text-rose-700">IV Parcial Ex. (30):</label>
+                        <input type="number" id="editP4Exam" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1">
+                    </div>
+
+                    <div>
+                        <label class="font-bold text-blue-700">I Recuperación:</label>
+                        <input type="number" id="editRec1" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1">
+                    </div>
+                    <div>
+                        <label class="font-bold text-blue-700">II Recuperación:</label>
+                        <input type="number" id="editRec2" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex space-x-2 pt-2 border-t">
+                <button onclick="saveEditedStudent()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-xl text-xs font-bold">Guardar Cambios</button>
+                <button onclick="closeEditStudentModal()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 py-2 rounded-xl text-xs font-bold">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LÓGICA JAVASCRIPT -->
+    <script>
+        const coursesInfo = {
+            '7-1': { grado: 'SEPTIMO', seccion: '1', modalidad: 'TERCER CICLO DE EDUCACION BASICA' },
+            '7-2': { grado: 'SEPTIMO', seccion: '2', modalidad: 'TERCER CICLO DE EDUCACION BASICA' },
+            '7-3': { grado: 'SEPTIMO', seccion: '3', modalidad: 'TERCER CICLO DE EDUCACION BASICA' },
+            '8-1': { grado: 'OCTAVO', seccion: '1', modalidad: 'TERCER CICLO DE EDUCACION BASICA' },
+            '8-2': { grado: 'OCTAVO', seccion: '2', modalidad: 'TERCER CICLO DE EDUCACION BASICA' },
+            '9-1': { grado: 'NOVENO', seccion: '1', modalidad: 'TERCER CICLO DE EDUCACION BASICA' },
+            '9-2': { grado: 'NOVENO', seccion: '2', modalidad: 'TERCER CICLO DE EDUCACION BASICA' },
+            '10-1': { grado: 'DECIMO', seccion: '1', modalidad: 'BCH / BTP INFORMATICA' },
+            '10-2': { grado: 'DECIMO', seccion: '2', modalidad: 'BCH / BTP INFORMATICA' },
+            '11-BTPIDA': { grado: 'ONCEAVO', seccion: 'A', modalidad: 'BTP EN AGROINDUSTRIA' },
+            '12-BTPIDA': { grado: 'DOCEAVO', seccion: 'A', modalidad: 'BTP EN AGROINDUSTRIA' },
+            '11-BTPI': { grado: 'ONCEAVO', seccion: '1', modalidad: 'BTP EN INFORMATICA' },
+            '12-BTPI': { grado: 'DOCEAVO', seccion: '1', modalidad: 'BTP EN INFORMATICA' },
+            '11-BCH': { grado: 'ONCEAVO', seccion: '1', modalidad: 'BACHILLERATO EN CIENCIAS Y HUMANIDADES' }
+        };
+
+        const courseSubjects = {
+            '7-1': ['CIENCIAS NATURALES', 'DIBUJO TÉCNICO', 'EDUCACIÓN ARTISTICA', 'EDUCACIÓN CÍVICA', 'EDU. FÍSICA Y DEPORTES', 'ESPAÑOL', 'ESTUDIOS SOCIALES', 'INGLÉS', 'MATEMÁTICAS', 'MÓDULO BÁSICOS'],
+            '7-2': ['CIENCIAS NATURALES', 'DIBUJO TÉCNICO', 'EDUCACIÓN ARTISTICA', 'EDUCACIÓN CÍVICA', 'EDU. FÍSICA Y DEPORTES', 'ESPAÑOL', 'ESTUDIOS SOCIALES', 'INGLÉS', 'MATEMÁTICAS', 'MÓDULO BÁSICOS'],
+            '7-3': ['CIENCIAS NATURALES', 'DIBUJO TÉCNICO', 'EDUCACIÓN ARTISTICA', 'EDUCACIÓN CÍVICA', 'EDU. FÍSICA Y DEPORTES', 'ESPAÑOL', 'ESTUDIOS SOCIALES', 'INGLÉS', 'MATEMÁTICAS', 'MÓDULO BÁSICOS'],
+            '8-1': ['CIENCIAS NATURALES', 'DIBUJO TÉCNICO', 'EDUCACIÓN ARTISTICA', 'EDUCACIÓN CÍVICA', 'EDU. FÍSICA Y DEPORTES', 'ESPAÑOL', 'ESTUDIOS SOCIALES', 'INGLÉS', 'MATEMÁTICAS', 'MÓDULO BÁSICOS'],
+            '8-2': ['CIENCIAS NATURALES', 'DIBUJO TÉCNICO', 'EDUCACIÓN ARTISTICA', 'EDUCACIÓN CÍVICA', 'EDU. FÍSICA Y DEPORTES', 'ESPAÑOL', 'ESTUDIOS SOCIALES', 'INGLÉS', 'MATEMÁTICAS', 'MÓDULO BÁSICOS'],
+            '9-1': ['CIENCIAS NATURALES', 'DIBUJO TÉCNICO', 'EDUCACIÓN ARTISTICA', 'EDUCACIÓN CÍVICA', 'EDU. FÍSICA Y DEPORTES', 'ESPAÑOL', 'ESTUDIOS SOCIALES', 'INGLÉS', 'MATEMÁTICAS', 'MÓDULO BÁSICOS'],
+            '9-2': ['CIENCIAS NATURALES', 'DIBUJO TÉCNICO', 'EDUCACIÓN ARTISTICA', 'EDUCACIÓN CÍVICA', 'EDU. FÍSICA Y DEPORTES', 'ESPAÑOL', 'ESTUDIOS SOCIALES', 'INGLÉS', 'MATEMÁTICAS', 'MÓDULO BÁSICOS'],
+            '10-1': ['QUÍMICA', 'ESPAÑOL', 'MATEMÁTICAS', 'INGLÉS', 'FUNDAMENTOS DE PSICOLOGÍA', 'BIOLOGÍA', 'FÍSICA', 'SOCIOLOGÍA', 'EDU. FÍSICA Y DEPORTE', 'HISTOIA DE HONDURAS', 'INFORMÁTICA'],
+            '10-2': ['QUÍMICA', 'ESPAÑOL', 'MATEMÁTICAS', 'INGLÉS', 'FUNDAMENTOS DE PSICOLOGÍA', 'BIOLOGÍA', 'FÍSICA', 'SOCIOLOGÍA', 'EDU. FÍSICA Y DEPORTE', 'HISTOIA DE HONDURAS', 'INFORMÁTICA'],
+            '11-BTPIDA': ['MANEJO DE CULTIVOS AGRÍCOLAS - FORESTALES I', 'SOCIOLOGÍA RURAL', 'EDUCACIÓN ARTÍSTICA', 'MATEMÁTICA APLICADA', 'MANEJO DE ESPECIES MENORES', 'PROYECTOS AGROPECUARIOS - FORESTALES', 'FÍSICA APLICADA', 'ENCADENAMIENTO AGROPECUARIO O FORESTAL', 'DESARROLLO Y EXTENSIÓN AGROPECUARIO - FORESTAL', 'MANEJO SOSTENIBLE DE RECURSOS NATURALES', 'LEGISLACIÓN AGROPECUARIA-FORESTAL', 'LENGUA Y LITERATURA', 'INGLÉS TÉCNICO'],
+            '12-BTPIDA': ['FILOSOFÍA', 'MANEJO DE ESPECIES MAYORES', 'HABILIDADES PARA LA VIDA', 'AGRICULTURA SOSTENIBLE', 'DESARROLLO COMUNITARIO Y ASOCIATIVISMO', 'EDUCACIÓN FINANACIERA AGROPECUARIA- FORESTAL', 'EMPRENDIMIENTO AGROPECUARIO - FORESTAL', 'INVESTIGACIÓN Y VALIDACIÓN AGROPECUARIA - FORESTAL', 'INDUSTRIALIZACIÓN AGROPECUARIA - FORESTAL', 'MANEJO DE CULTIVOS AGRICOLAS - FORESTALES II'],
+            '11-BTPI': ['EDUCACIÓN Y APRECIACIÓN ARTÍSTICA', 'FÍSICA', 'FILOSOFÍA', 'LEGISLACIÓN APLICADA A LA INFORMÁTICA', 'MATEMÁTICA', 'ESPAÑOL', 'OFIMÁTICA', 'INGLÉS TÉCNICO', 'ANÁLISIS Y DISEÑO DE SISTEMAS', 'PROGRAMACIÓN I', 'INFORMÁTICA APLICADA'],
+            '12-BTPI': ['DISEÑO WEB', 'PRODUCCIONES DIGITALES', 'GESTIÓN EMPRESARIAL ORIENTADA A INFORMÁTICA', 'PROGRAMACIÓN II', 'REDES INFORMÁTICAS', 'MANTENIMIENTO Y REPARACIÓN'],
+            '11-BCH': ['QUÍMICA', 'INTRODUCCIÓN A LA ECONOMÍA', 'BIOLOGÍA', 'FÍSICA', 'EDUCACIÓN Y APRECIACIÓN ARTÍSTICA', 'INGLÉS', 'FILOSOFÍA', 'HISTORIA UNIVERSAL', 'ANTROPOLOGÍA', 'MATEMÁTICA', 'ESPAÑOL']
+        };
+
+        let teachersRegistry = [
+            { name: 'LIC. FERNANDO ANTONIO ZELAYA ARRIAGA', email: 'fernando.zelaya@itol.edu.hn' },
+            { name: 'LICDA. MARÍA CONCEPCIÓN GÓMEZ', email: 'maria.gomez@itol.edu.hn' },
+            { name: 'ING. JORGE LUIS MEJÍA', email: 'jorge.mejia@itol.edu.hn' }
+        ];
+
+        let currentTeacher = teachersRegistry[0].name;
+        let currentCourse = '7-1';
+        let currentSubject = courseSubjects['7-1'][0];
+        let currentJornada = 'MATUTINA';
+        let evalDatabase = {};
+        let subjectTeachersMap = {};
+
+        function toggleJornada() {
+            currentJornada = currentJornada === 'MATUTINA' ? 'VESPERTINA' : 'MATUTINA';
+            document.getElementById('btnJornadaText').innerText = currentJornada;
+            document.getElementById('lblJornada').innerText = currentJornada;
+        }
+
+        function initData() {
+            Object.keys(courseSubjects).forEach(course => {
+                courseSubjects[course].forEach(subj => {
+                    const key = `${course}_${subj}`;
+                    evalDatabase[key] = [
+                        { name: 'ALANY SOFIA RODRIGUEZ GARRIDO', dni: '0301201402232', p1Acc: 65, p1Exam: 20, p2Acc: 60, p2Exam: 25, p3Acc: 65, p3Exam: 20, p4Acc: 68, p4Exam: 26, rec1: '', rec2: '' },
+                        { name: 'ANGELY CRISTEL MARTINEZ ZAVALA', dni: '0313201300558', p1Acc: 70, p1Exam: 25, p2Acc: 68, p2Exam: 27, p3Acc: 70, p3Exam: 29, p4Acc: 70, p4Exam: 30, rec1: '', rec2: '' },
+                        { name: 'ARYANY MICHELLE BUESO PADILLA', dni: '0313201400399', p1Acc: 68, p1Exam: 24, p2Acc: 70, p2Exam: 28, p3Acc: 70, p3Exam: 30, p4Acc: 70, p4Exam: 30, rec1: '', rec2: '' }
+                    ];
+                });
+            });
+        }
+
+        function renderCourseSelectors() {
+            const container = document.getElementById('courseSelectorContainer');
+            container.innerHTML = Object.keys(coursesInfo).map(cId => `
+                <button onclick="selectCourse('${cId}')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${currentCourse === cId ? 'bg-slate-900 text-amber-400 shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
+                    ${cId}
+                </button>
+            `).join('');
+        }
+
+        function renderSubjectDropdown() {
+            const dropdown = document.getElementById('subjectDropdown');
+            const subjects = courseSubjects[currentCourse] || [];
+            dropdown.innerHTML = subjects.map(s => `
+                <option value="${s}" ${s === currentSubject ? 'selected' : ''}>${s}</option>
+            `).join('');
+        }
+
+        function selectCourse(cId) {
+            currentCourse = cId;
+            currentSubject = courseSubjects[cId][0];
+            renderCourseSelectors();
+            renderSubjectDropdown();
+            updateHeaderLabels();
+            renderSheetTable();
+        }
+
+        function changeSubject(sVal) {
+            currentSubject = sVal;
+            updateHeaderLabels();
+            renderSheetTable();
+        }
+
+        function updateHeaderLabels() {
+            const info = coursesInfo[currentCourse];
+            document.getElementById('lblGrado').innerText = info.grado;
+            document.getElementById('lblSeccion').innerText = info.seccion;
+            document.getElementById('lblModalidad').innerText = info.modalidad;
+            document.getElementById('lblJornada').innerText = currentJornada;
+            
+            const key = `${currentCourse}_${currentSubject}`;
+            const activeTeacher = subjectTeachersMap[key] || currentTeacher;
+            
+            document.getElementById('lblDocente').innerText = activeTeacher;
+            document.getElementById('lblAsignatura').innerText = currentSubject;
+        }
+
+        function openSubjectTeacherModal() {
+            const key = `${currentCourse}_${currentSubject}`;
+            document.getElementById('modalCurrentSubjectName').value = currentSubject + " (" + currentCourse + ")";
+            document.getElementById('modalSubjectTeacherInput').value = subjectTeachersMap[key] || currentTeacher;
+            document.getElementById('modalSubjectTeacher').classList.remove('hidden');
+        }
+
+        function closeSubjectTeacherModal() {
+            document.getElementById('modalSubjectTeacher').classList.add('hidden');
+        }
+
+        function saveSubjectTeacher() {
+            const tName = document.getElementById('modalSubjectTeacherInput').value.trim().toUpperCase();
+            if (!tName) {
+                alert("Por favor ingrese el nombre del docente.");
+                return;
+            }
+            const key = `${currentCourse}_${currentSubject}`;
+            subjectTeachersMap[key] = tName;
+            updateHeaderLabels();
+            closeSubjectTeacherModal();
+        }
+
+        function renderSheetTable() {
+            const key = `${currentCourse}_${currentSubject}`;
+            if (!evalDatabase[key]) evalDatabase[key] = [];
+
+            const list = evalDatabase[key];
+            const container = document.getElementById('tableSheetContainer');
+
+            let html = `
+                <table class="w-full border-collapse border border-slate-900 text-[11px]" id="excelEvaluationTable">
+                    <thead>
+                        <tr class="bg-amber-100/60 text-slate-900 font-bold text-center">
+                            <th rowspan="2" class="border border-slate-800 p-1 w-8">N°</th>
+                            <th rowspan="2" class="border border-slate-800 p-2 text-left w-60">NOMBRE DEL ESTUDIANTE</th>
+                            <th rowspan="2" class="border border-slate-800 p-2 w-28">DNI</th>
+                            <th colspan="3" class="border border-slate-800 p-1 bg-amber-200">I Parcial</th>
+                            <th colspan="3" class="border border-slate-800 p-1 bg-purple-100">II Parcial</th>
+                            <th colspan="3" class="border border-slate-800 p-1 bg-sky-100">III Parcial</th>
+                            <th colspan="3" class="border border-slate-800 p-1 bg-rose-100">IV Parcial</th>
+                            <th rowspan="2" class="border border-slate-800 p-1 w-12 bg-slate-200 vertical-text">Promedio</th>
+                            <th rowspan="2" class="border border-slate-800 p-1 w-10 vertical-text">I Rec.</th>
+                            <th rowspan="2" class="border border-slate-800 p-1 w-10 vertical-text">II Rec.</th>
+                            <th rowspan="2" class="border border-slate-800 p-1 w-16 no-print">Acciones</th>
+                        </tr>
+                        <tr class="text-[9px] font-bold text-slate-700 text-center">
+                            <th class="border border-slate-800 p-1 bg-amber-50 vertical-text">Acum. 70%</th>
+                            <th class="border border-slate-800 p-1 bg-amber-50 vertical-text">Ex. 30%</th>
+                            <th class="border border-slate-800 p-1 bg-amber-100 font-extrabold vertical-text">TOTAL</th>
+
+                            <th class="border border-slate-800 p-1 bg-purple-50 vertical-text">Acum. 70%</th>
+                            <th class="border border-slate-800 p-1 bg-purple-50 vertical-text">Ex. 30%</th>
+                            <th class="border border-slate-800 p-1 bg-purple-100 font-extrabold vertical-text">TOTAL</th>
+
+                            <th class="border border-slate-800 p-1 bg-sky-50 vertical-text">Acum. 70%</th>
+                            <th class="border border-slate-800 p-1 bg-sky-50 vertical-text">Ex. 30%</th>
+                            <th class="border border-slate-800 p-1 bg-sky-100 font-extrabold vertical-text">TOTAL</th>
+
+                            <th class="border border-slate-800 p-1 bg-rose-50 vertical-text">Acum. 70%</th>
+                            <th class="border border-slate-800 p-1 bg-rose-50 vertical-text">Ex. 30%</th>
+                            <th class="border border-slate-800 p-1 bg-rose-100 font-extrabold vertical-text">TOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800 font-semibold">
+            `;
+
+            list.forEach((st, idx) => {
+                const t1 = (parseInt(st.p1Acc)||0) + (parseInt(st.p1Exam)||0);
+                const t2 = (parseInt(st.p2Acc)||0) + (parseInt(st.p2Exam)||0);
+                const t3 = (parseInt(st.p3Acc)||0) + (parseInt(st.p3Exam)||0);
+                const t4 = (parseInt(st.p4Acc)||0) + (parseInt(st.p4Exam)||0);
+                const prom = Math.round((t1 + t2 + t3 + t4) / 4);
+
+                html += `
+                    <tr class="hover:bg-slate-50 text-center">
+                        <td class="border border-slate-800 p-1 font-bold text-slate-600">${idx + 1}</td>
+                        <td class="border border-slate-800 p-1 text-left uppercase font-bold text-slate-900">${st.name}</td>
+                        <td class="border border-slate-800 p-1 font-mono text-slate-700">${st.dni}</td>
+
+                        <td class="border border-slate-800 p-0.5"><input type="number" min="0" max="70" value="${st.p1Acc}" onchange="updateScore('${key}', ${idx}, 'p1Acc', this.value)" class="w-8 text-center bg-transparent rounded"></td>
+                        <td class="border border-slate-800 p-0.5"><input type="number" min="0" max="30" value="${st.p1Exam}" onchange="updateScore('${key}', ${idx}, 'p1Exam', this.value)" class="w-8 text-center bg-transparent rounded"></td>
+                        <td class="border border-slate-800 p-1 font-black bg-amber-50/60">${t1}</td>
+
+                        <td class="border border-slate-800 p-0.5"><input type="number" min="0" max="70" value="${st.p2Acc}" onchange="updateScore('${key}', ${idx}, 'p2Acc', this.value)" class="w-8 text-center bg-transparent rounded"></td>
+                        <td class="border border-slate-800 p-0.5"><input type="number" min="0" max="30" value="${st.p2Exam}" onchange="updateScore('${key}', ${idx}, 'p2Exam', this.value)" class="w-8 text-center bg-transparent rounded"></td>
+                        <td class="border border-slate-800 p-1 font-black bg-purple-50/60">${t2}</td>
+
+                        <td class="border border-slate-800 p-0.5"><input type="number" min="0" max="70" value="${st.p3Acc}" onchange="updateScore('${key}', ${idx}, 'p3Acc', this.value)" class="w-8 text-center bg-transparent rounded"></td>
+                        <td class="border border-slate-800 p-0.5"><input type="number" min="0" max="30" value="${st.p3Exam}" onchange="updateScore('${key}', ${idx}, 'p3Exam', this.value)" class="w-8 text-center bg-transparent rounded"></td>
+                        <td class="border border-slate-800 p-1 font-black bg-sky-50/60">${t3}</td>
+
+                        <td class="border border-slate-800 p-0.5"><input type="number" min="0" max="70" value="${st.p4Acc}" onchange="updateScore('${key}', ${idx}, 'p4Acc', this.value)" class="w-8 text-center bg-transparent rounded"></td>
+                        <td class="border border-slate-800 p-0.5"><input type="number" min="0" max="30" value="${st.p4Exam}" onchange="updateScore('${key}', ${idx}, 'p4Exam', this.value)" class="w-8 text-center bg-transparent rounded"></td>
+                        <td class="border border-slate-800 p-1 font-black bg-rose-50/60">${t4}</td>
+
+                        <td class="border border-slate-800 p-1 font-extrabold text-xs ${prom >= 70 ? 'text-emerald-800 bg-emerald-100/50' : 'text-rose-800 bg-rose-100/50'}">${prom}%</td>
+                        <td class="border border-slate-800 p-0.5"><input type="number" min="0" max="100" value="${st.rec1}" onchange="updateScore('${key}', ${idx}, 'rec1', this.value)" class="w-8 text-center font-bold text-blue-600 bg-transparent rounded"></td>
+                        <td class="border border-slate-800 p-0.5"><input type="number" min="0" max="100" value="${st.rec2}" onchange="updateScore('${key}', ${idx}, 'rec2', this.value)" class="w-8 text-center font-bold text-blue-600 bg-transparent rounded"></td>
+                        
+                        <td class="border border-slate-800 p-1 no-print">
+                            <button onclick="openEditStudentModal('${key}', ${idx})" class="bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded text-[10px] font-bold"><i class="fa-solid fa-pen-to-square"></i> Editar</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        function updateScore(key, idx, field, val) {
+            evalDatabase[key][idx][field] = val === '' ? '' : parseInt(val) || 0;
+            renderSheetTable();
+        }
+
+        function addNewStudent() {
+            const name = prompt("Nombre completo del estudiante:");
+            if (!name) return;
+            const dni = prompt("Número de DNI:", "030120140" + Math.floor(100 + Math.random() * 900));
+
+            const key = `${currentCourse}_${currentSubject}`;
+            evalDatabase[key].push({
+                name: name.toUpperCase(),
+                dni: dni || '0000000000000',
+                p1Acc: 0, p1Exam: 0, p2Acc: 0, p2Exam: 0, p3Acc: 0, p3Exam: 0, p4Acc: 0, p4Exam: 0,
+                rec1: '', rec2: ''
+            });
+
+            renderSheetTable();
+        }
+
+        function openPasteModal() {
+            document.getElementById('pasteTextarea').value = '';
+            document.getElementById('modalPasteExcel').classList.remove('hidden');
+        }
+
+        function closePasteModal() {
+            document.getElementById('modalPasteExcel').classList.add('hidden');
+        }
+
+        function processPastedExcelData() {
+            const rawText = document.getElementById('pasteTextarea').value.trim();
+            if (!rawText) {
+                alert("Pega el contenido desde Excel.");
+                return;
+            }
+
+            const rows = rawText.split('\n');
+            const key = `${currentCourse}_${currentSubject}`;
+            let count = 0;
+
+            rows.forEach(row => {
+                const cols = row.split('\t').map(c => c.trim());
+                if (cols.length >= 1 && cols[0] !== '') {
+                    let nameIdx = 0;
+                    let dniIdx = 1;
+                    if (!isNaN(cols[0]) && cols.length > 1) {
+                        nameIdx = 1;
+                        dniIdx = 2;
+                    }
+
+                    const name = cols[nameIdx] || '';
+                    if (!name || name.toUpperCase().includes("NOMBRE") || name.toUpperCase().includes("ESTUDIANTE")) return;
+
+                    const dni = cols[dniIdx] || '0000000000000';
+                    const p1Acc = parseInt(cols[dniIdx + 1]) || 0;
+                    const p1Exam = parseInt(cols[dniIdx + 2]) || 0;
+                    const p2Acc = parseInt(cols[dniIdx + 4]) || 0;
+                    const p2Exam = parseInt(cols[dniIdx + 5]) || 0;
+                    const p3Acc = parseInt(cols[dniIdx + 7]) || 0;
+                    const p3Exam = parseInt(cols[dniIdx + 8]) || 0;
+                    const p4Acc = parseInt(cols[dniIdx + 10]) || 0;
+                    const p4Exam = parseInt(cols[dniIdx + 11]) || 0;
+
+                    evalDatabase[key].push({
+                        name: name.toUpperCase(),
+                        dni: dni,
+                        p1Acc: p1Acc, p1Exam: p1Exam,
+                        p2Acc: p2Acc, p2Exam: p2Exam,
+                        p3Acc: p3Acc, p3Exam: p3Exam,
+                        p4Acc: p4Acc, p4Exam: p4Exam,
+                        rec1: '', rec2: ''
+                    });
+                    count++;
+                }
+            });
+
+            closePasteModal();
+            renderSheetTable();
+            alert(`¡Se importaron ${count} estudiantes exitosamente!`);
+        }
+
+        let editingKey = '';
+        let editingIndex = -1;
+
+        function openEditStudentModal(key, idx) {
+            editingKey = key;
+            editingIndex = idx;
+            const st = evalDatabase[key][idx];
+            document.getElementById('editStudentName').value = st.name;
+            document.getElementById('editStudentDni').value = st.dni;
+            
+            document.getElementById('editP1Acc').value = st.p1Acc;
+            document.getElementById('editP1Exam').value = st.p1Exam;
+            document.getElementById('editP2Acc').value = st.p2Acc;
+            document.getElementById('editP2Exam').value = st.p2Exam;
+            document.getElementById('editP3Acc').value = st.p3Acc;
+            document.getElementById('editP3Exam').value = st.p3Exam;
+            document.getElementById('editP4Acc').value = st.p4Acc;
+            document.getElementById('editP4Exam').value = st.p4Exam;
+            document.getElementById('editRec1').value = st.rec1;
+            document.getElementById('editRec2').value = st.rec2;
+
+            document.getElementById('modalEditStudent').classList.remove('hidden');
+        }
+
+        function closeEditStudentModal() {
+            document.getElementById('modalEditStudent').classList.add('hidden');
+        }
+
+        function saveEditedStudent() {
+            const name = document.getElementById('editStudentName').value.trim().toUpperCase();
+            const dni = document.getElementById('editStudentDni').value.trim();
+            if (!name) { alert("El nombre no puede estar vacío"); return; }
+
+            let st = evalDatabase[editingKey][editingIndex];
+            st.name = name;
+            st.dni = dni;
+            st.p1Acc = parseInt(document.getElementById('editP1Acc').value) || 0;
+            st.p1Exam = parseInt(document.getElementById('editP1Exam').value) || 0;
+            st.p2Acc = parseInt(document.getElementById('editP2Acc').value) || 0;
+            st.p2Exam = parseInt(document.getElementById('editP2Exam').value) || 0;
+            st.p3Acc = parseInt(document.getElementById('editP3Acc').value) || 0;
+            st.p3Exam = parseInt(document.getElementById('editP3Exam').value) || 0;
+            st.p4Acc = parseInt(document.getElementById('editP4Acc').value) || 0;
+            st.p4Exam = parseInt(document.getElementById('editP4Exam').value) || 0;
+            st.rec1 = document.getElementById('editRec1').value;
+            st.rec2 = document.getElementById('editRec2').value;
+
+            closeEditStudentModal();
+            renderSheetTable();
+        }
+
+        function openTeacherModal() {
+            const container = document.getElementById('teacherOptions');
+            container.innerHTML = teachersRegistry.map(t => `
+                <div onclick="changeTeacher('${t.name}')" class="p-2.5 rounded-xl border ${currentTeacher === t.name ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 hover:border-slate-300'} cursor-pointer flex justify-between items-center text-xs font-bold transition-all">
+                    <span>${t.name}</span>
+                    <span class="text-[10px] text-slate-500 font-normal">${t.email}</span>
+                </div>
+            `).join('');
+            document.getElementById('modalTeacherLogin').classList.remove('hidden');
+        }
+
+        function closeTeacherModal() {
+            document.getElementById('modalTeacherLogin').classList.add('hidden');
+        }
+
+        function changeTeacher(tName) {
+            currentTeacher = tName;
+            document.getElementById('currentTeacherBtn').innerText = tName;
+            updateHeaderLabels();
+            closeTeacherModal();
+        }
+
+        function registerNewTeacher() {
+            const name = document.getElementById('newProfName').value.trim();
+            const email = document.getElementById('newProfEmail').value.trim();
+
+            if (!name || !email) {
+                alert("Por favor complete el nombre y el correo electrónico.");
+                return;
+            }
+
+            teachersRegistry.push({ name: name.toUpperCase(), email: email });
+            document.getElementById('newProfName').value = '';
+            document.getElementById('newProfEmail').value = '';
+            openTeacherModal();
+            changeTeacher(name.toUpperCase());
+        }
+
+        function exportToExcel() {
+            const key = `${currentCourse}_${currentSubject}`;
+            const list = evalDatabase[key] || [];
+            const activeTeacher = subjectTeachersMap[key] || currentTeacher;
+
+            let wb = XLSX.utils.book_new();
+            let ws_data = [
+                ["INSTITUTO TÉCNICO OBDULIO LEZAMA - SACE 2026"],
+                ["DOCENTE:", activeTeacher],
+                ["ASIGNATURA:", currentSubject],
+                ["CURSO:", currentCourse, "GRADO:", coursesInfo[currentCourse].grado, "SECCIÓN:", coursesInfo[currentCourse].seccion, "JORNADA:", currentJornada],
+                [],
+                ["N°", "NOMBRE DEL ESTUDIANTE", "DNI", "I Parcial", "", "", "II Parcial", "", "", "III Parcial", "", "", "IV Parcial", "", "", "Promedio", "I Rec.", "II Rec."],
+                ["", "", "", "Acum. 70%", "Ex. 30%", "TOTAL", "Acum. 70%", "Ex. 30%", "TOTAL", "Acum. 70%", "Ex. 30%", "TOTAL", "Acum. 70%", "Ex. 30%", "TOTAL", "", "", ""]
+            ];
+
+            list.forEach((st, idx) => {
+                const t1 = (parseInt(st.p1Acc)||0) + (parseInt(st.p1Exam)||0);
+                const t2 = (parseInt(st.p2Acc)||0) + (parseInt(st.p2Exam)||0);
+                const t3 = (parseInt(st.p3Acc)||0) + (parseInt(st.p3Exam)||0);
+                const t4 = (parseInt(st.p4Acc)||0) + (parseInt(st.p4Exam)||0);
+                const prom = Math.round((t1 + t2 + t3 + t4) / 4);
+
+                ws_data.push([
+                    idx + 1, st.name, String(st.dni),
+                    st.p1Acc, st.p1Exam, t1,
+                    st.p2Acc, st.p2Exam, t2,
+                    st.p3Acc, st.p3Exam, t3,
+                    st.p4Acc, st.p4Exam, t4,
+                    prom + "%", st.rec1, st.rec2
+                ]);
+            });
+
+            let ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+            const borderStyle = { top: {style: "thin", color: {rgb: "000000"}}, bottom: {style: "thin", color: {rgb: "000000"}}, left: {style: "thin", color: {rgb: "000000"}}, right: {style: "thin", color: {rgb: "000000"}} };
+            
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            for (let R = range.s.r; R <= range.e.r; ++R) {
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const cellAddress = XLSX.utils.encode_cell({r: R, c: C});
+                    if (!ws[cellAddress]) continue;
+                    
+                    if (!ws[cellAddress].s) ws[cellAddress].s = {};
+                    ws[cellAddress].s.border = borderStyle;
+
+                    if (R === 5) {
+                        ws[cellAddress].s.font = {bold: true, color: {rgb: "000000"}, sz: 11};
+                        ws[cellAddress].s.alignment = {horizontal: "center", vertical: "center"};
+                        if (C >= 3 && C <= 5) ws[cellAddress].s.fill = {fgColor: {rgb: "FEF08A"}};
+                        else if (C >= 6 && C <= 8) ws[cellAddress].s.fill = {fgColor: {rgb: "E9D5FF"}};
+                        else if (C >= 9 && C <= 11) ws[cellAddress].s.fill = {fgColor: {rgb: "BAE6FD"}};
+                        else if (C >= 12 && C <= 14) ws[cellAddress].s.fill = {fgColor: {rgb: "FECDD3"}};
+                        else ws[cellAddress].s.fill = {fgColor: {rgb: "E2E8F0"}};
+                    }
+                    else if (R === 6) {
+                        ws[cellAddress].s.font = {bold: true, color: {rgb: "334155"}, sz: 9};
+                        ws[cellAddress].s.alignment = {horizontal: "center", vertical: "center"};
+                        if (C >= 3 && C <= 5) ws[cellAddress].s.fill = {fgColor: {rgb: "FEF9C3"}};
+                        else if (C >= 6 && C <= 8) ws[cellAddress].s.fill = {fgColor: {rgb: "F3E8FF"}};
+                        else if (C >= 9 && C <= 11) ws[cellAddress].s.fill = {fgColor: {rgb: "E0F2FE"}};
+                        else if (C >= 12 && C <= 14) ws[cellAddress].s.fill = {fgColor: {rgb: "FFE4E6"}};
+                        else ws[cellAddress].s.fill = {fgColor: {rgb: "F1F5F9"}};
+                    }
+                    else if (R >= 7) {
+                        ws[cellAddress].s.alignment = {vertical: "center", horizontal: C === 1 ? "left" : "center"};
+                        if (C === 5) ws[cellAddress].s.fill = {fgColor: {rgb: "FEF9C3"}};
+                        if (C === 8) ws[cellAddress].s.fill = {fgColor: {rgb: "F3E8FF"}};
+                        if (C === 11) ws[cellAddress].s.fill = {fgColor: {rgb: "E0F2FE"}};
+                        if (C === 14) ws[cellAddress].s.fill = {fgColor: {rgb: "FFE4E6"}};
+                        if (C === 15) ws[cellAddress].s.fill = {fgColor: {rgb: "D1FAE5"}};
+                    }
+                }
+            }
+
+            XLSX.utils.book_append_sheet(wb, ws, "CUADRO_EVALUACION");
+            XLSX.writeFile(wb, `Cuadro_${currentCourse}_${currentSubject}.xlsx`);
+        }
+
+        window.onload = function() {
+            initData();
+            renderCourseSelectors();
+            renderSubjectDropdown();
+            updateHeaderLabels();
+            renderSheetTable();
+        };
+    </script>
+</body>
+</html>
